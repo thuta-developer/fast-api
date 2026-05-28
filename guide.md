@@ -242,7 +242,7 @@ App config တွေပါ။ Django မှာ `DEBUG`, project name, URL prefix
 
 ```python
 database_url: str = Field(default="sqlite+aiosqlite:///./sql_app.db")
-```
+```k
 
 Database connection string ပါ။ ဒီ project က async SQLite driver `aiosqlite` သုံးထားပါတယ်။
 

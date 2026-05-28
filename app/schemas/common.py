@@ -10,11 +10,11 @@ class MessageResponse(BaseModel):
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
-    items: list[T]
     total: int
     page: int
     size: int
     pages: int
+    items: list[T]
 
 
 class ORMBase(BaseModel):

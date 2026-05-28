@@ -11,7 +11,7 @@ from app.core.security import create_access_token, get_password_hash, verify_pas
 from app.repositories.user_repository import UserRepository
 from app.schemas.common import PaginatedResponse
 from app.schemas.token import Token
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.schemas.user import UserAdminCreate, UserCreate, UserRead, UserUpdate
 from uuid import UUID
 
 
@@ -21,6 +21,21 @@ class UserService:
         self.repo = UserRepository(db)
 
     async def register(self, data: UserCreate) -> UserRead:
+        if await self.repo.email_exists(data.email):
+            raise ConflictException("Email already exists")
+
+        user = await self.repo.create(
+            email=data.email,
+            username=data.username,
+            full_name=data.full_name,
+            phone=data.phone,
+            hashed_password=get_password_hash(data.password),
+            is_superuser=False,
+            is_active=True,
+        )
+        return UserRead.model_validate(user)
+
+    async def admin_create_user(self, data: UserAdminCreate) -> UserRead:
         if await self.repo.email_exists(data.email):
             raise ConflictException("Email already exists")
 
@@ -70,9 +85,6 @@ class UserService:
         if data.email and await self.repo.email_exists(data.email, exclude_id=user_id):
             raise ConflictException("Email already in use")
 
-        if data.password:
-            user.hashed_password = get_password_hash(data.password)
-
         updated = await self.repo.update(user, data)
         return UserRead.model_validate(updated)
 
@@ -85,4 +97,3 @@ class UserService:
         
 
         
-

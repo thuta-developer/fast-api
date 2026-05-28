@@ -1,12 +1,10 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
 
-from app.api.deps import UserServiceDep
+from app.api.deps import LoginPayload, UserServiceDep, get_login_credentials
 from app.schemas.token import Token
 from app.schemas.user import UserCreate, UserRead
-from app.api.deps import UserServiceDep, get_login_credentials, LoginPayload
 
 router = APIRouter()
 

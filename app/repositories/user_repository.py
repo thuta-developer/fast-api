@@ -55,7 +55,7 @@ class UserRepository:
         await self.db.delete(user)
         await self.db.flush()
         
-    async def email_exists(self, email: str, exclude_id: int | None = None) -> bool:
+    async def email_exists(self, email: str, exclude_id: UUID | None = None) -> bool:
         query = select(User.id).where(User.email == email)
         if exclude_id is not None:
             query = query.where(User.id != exclude_id)

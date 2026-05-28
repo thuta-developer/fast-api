@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Callable
 
 from fastapi import Depends, Request, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -9,7 +9,9 @@ from app.core.exceptions import UnauthorizedException
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.user import User
+from app.repositories.rbac_repository import RBACRepository
 from app.repositories.user_repository import UserRepository
+from app.services.rbac_service import RBACService
 from app.services.user_service import UserService
 from uuid import UUID
 
@@ -51,6 +53,11 @@ def get_user_service(db: DbSession) -> UserService:
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 
+def get_rbac_service(db: DbSession) -> RBACService:
+    return RBACService(db)
+
+RBACServiceDep = Annotated[RBACService, Depends(get_rbac_service)]
+
 async def get_current_user(
     db: DbSession,
     token: Annotated[str, Depends(oauth2_scheme)],
@@ -73,3 +80,17 @@ async def get_current_superuser(current_user: CurrentUser) -> User:
     return current_user
 
 CurrentSuperuser = Annotated[User, Depends(get_current_superuser)]
+
+
+def require_permission(permission_code: str) -> Callable:
+    async def dependency(current_user: CurrentUser, db: DbSession) -> User:
+        if current_user.is_superuser:
+            return current_user
+
+        repo = RBACRepository(db)
+        permission_codes = await repo.get_user_permission_codes(current_user.id)
+        if permission_code not in permission_codes:
+            raise UnauthorizedException("Not enough permissions")
+        return current_user
+
+    return dependency
